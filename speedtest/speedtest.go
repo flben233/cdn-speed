@@ -56,6 +56,6 @@ Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms`)
 	}
 	fmt.Println("-----------------------------------------------------------------------------")
 	fmt.Println("系统时间：", time.Now().Format("2006-01-02 15:04:05 MST"))
-	fmt.Println("北京时间：", time.Now().In(time.FixedZone("CST", 8*3600)).Format("2006-01-02 15:04:05"), " CST")
+	fmt.Println("北京时间：", time.Now().In(time.FixedZone("CST", 8*3600)).Format("2006-01-02 15:04:05"), "CST")
 	fmt.Println("-----------------------------------------------------------------------------")
 }
