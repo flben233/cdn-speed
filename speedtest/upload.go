@@ -66,7 +66,7 @@ func UploadMultiThread(serverIp string, serverPort int32) float32 {
 	jobs := make([]chan SpeedResult, 8)
 	for i := 0; i < 8; i++ {
 		jobs[i] = make(chan SpeedResult, 1)
-		go uploadWorker(serverIp, serverPort, 8*1024*1024, jobs[i])
+		go uploadWorker(serverIp, serverPort, 16*1024*1024, jobs[i])
 	}
 	var result float32
 	for i, job := range jobs {
@@ -78,7 +78,6 @@ func UploadMultiThread(serverIp string, serverPort int32) float32 {
 			}
 		case <-time.After(60 * time.Second):
 			result += 0
-			fmt.Println("Timeout")
 		}
 	}
 	return result
