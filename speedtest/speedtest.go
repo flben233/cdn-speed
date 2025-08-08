@@ -44,14 +44,15 @@ Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms`)
 		if multiThread {
 			ch <- fmt.Sprintf("%s %s", server.Name, "Download")
 			down = DownloadMultiThread(testServer.URL, server.IP)
-			ch <- fmt.Sprintf("%s %s", server.Name, "  Upload")
+			ch <- fmt.Sprintf("%s %s", server.Name, "Upload")
 			up = UploadMultiThread(server.IP, port)
 		} else {
 			ch <- fmt.Sprintf("%s %s", server.Name, "Download")
 			down = DownloadSingleThread(testServer.URL, server.IP)
-			ch <- fmt.Sprintf("%s %s", server.Name, "  Upload")
+			ch <- fmt.Sprintf("%s %s", server.Name, "Upload")
 			up = UploadSingleThread(server.IP, port)
 		}
+		ch <- fmt.Sprintf("%s %s", server.Name, "Ping")
 		ping := Ping(server.IP)
 		cancel()
 		down, up = down*8/(1024*1024), up*8/(1024*1024)

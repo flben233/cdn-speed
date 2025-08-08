@@ -4,6 +4,7 @@ import (
 	probing "github.com/prometheus-community/pro-bing"
 	"log"
 	"math"
+	"time"
 )
 
 func Ping(ip string) PingResult {
@@ -14,6 +15,7 @@ func Ping(ip string) PingResult {
 	}
 	pinger.SetPrivileged(true)
 	pinger.Count = 3
+	pinger.Timeout = 5 * time.Second
 	err = pinger.Run()
 	if err != nil {
 		log.Printf("Error running pinger for %s: %v\n", ip, err)
@@ -21,7 +23,7 @@ func Ping(ip string) PingResult {
 	}
 	stats := pinger.Statistics()
 	jitter := 0.0
-	for i := 0; i < pinger.Count-1; i++ {
+	for i := 0; i < len(stats.Rtts)-1; i++ {
 		jitter += math.Abs(float64(stats.Rtts[i+1].Microseconds()-stats.Rtts[i].Microseconds())/1000.0) / float64(pinger.Count)
 	}
 	return PingResult{

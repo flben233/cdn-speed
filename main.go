@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/shirakawatyu/cdn-speed/speedtest"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 )
 
@@ -16,9 +18,12 @@ var nodesJson []byte
 var banner string
 
 func main() {
-	file, err := os.OpenFile("cdn-speed.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_APPEND, 0666)
-	// 从头写入
+	go func() {
+		log.Println(http.ListenAndServe(":6060", nil))
+	}()
 
+	file, err := os.OpenFile("cdn-speed.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC|os.O_APPEND, 0755)
+	// 从头写入
 	if err != nil {
 		panic(err)
 	}

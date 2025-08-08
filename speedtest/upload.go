@@ -50,27 +50,16 @@ func uploadWorker(serverIp string, serverPort int32, size int32, ch chan SpeedRe
 			"Connection: close\r\n"+
 			"\r\n",
 		"/", serverIp, size)
-	ForceExitIfTimeout(conn, timeout)
-	done := make(chan bool, 1)
-	go func() {
-		start := time.Now()
-		if nn, err := io.Copy(conn, &nullReader{total: int64(size), head: []byte(req)}); err != nil {
-			if err.(net.Error).Timeout() {
-				ch <- SpeedResult{
-					float32(nn) / float32(time.Since(start).Seconds()),
-					nil}
-			} else {
-				ch <- SpeedResult{
-					float32(nn) / float32(time.Since(start).Seconds()),
-					err}
-			}
-			return
-		}
-		elapse := float32(time.Since(start).Seconds())
-		speed := float32(size) / elapse
-		ch <- SpeedResult{speed, nil}
-		done <- true
-	}()
+	start := time.Now()
+	if nn, err := io.Copy(conn, &nullReader{total: int64(size), head: []byte(req)}); err != nil {
+		ch <- SpeedResult{
+			float32(nn) / float32(time.Since(start).Seconds()),
+			err}
+		return
+	}
+	elapse := float32(time.Since(start).Seconds())
+	speed := float32(size) / elapse
+	ch <- SpeedResult{speed, nil}
 }
 
 func UploadMultiThread(serverIp string, serverPort int32) float32 {
@@ -89,6 +78,7 @@ func UploadMultiThread(serverIp string, serverPort int32) float32 {
 			}
 		case <-time.After(60 * time.Second):
 			result += 0
+			fmt.Println("Timeout")
 		}
 	}
 	return result
