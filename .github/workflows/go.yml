@@ -1,0 +1,70 @@
+name: Go Multi-Arch Auto Release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24'
+
+    - name: Get Dependencies
+      run: go mod tidy
+
+    - name: Build for multiple platforms
+      run: |
+        mkdir -p dist
+        PLATFORMS=(
+          "linux/amd64"
+          "linux/arm64"
+          "windows/amd64"
+          "windows/arm64"
+          "darwin/amd64"
+          "darwin/arm64"
+        )
+        for platform in "${PLATFORMS[@]}"; do
+          GOOS=${platform%/*}
+          GOARCH=${platform#*/}
+          output="dist/tyu-diskmark-${GOOS}-${GOARCH}"
+          if [ "$GOOS" = "windows" ]; then
+            output="${output}.exe"
+          fi
+          echo "Building for $GOOS/$GOARCH..."
+          GOOS=$GOOS GOARCH=$GOARCH go build -o "$output" ./...
+        done
+        ls -lh dist
+
+    - name: Create Tag
+      id: tag_step
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        TAG="v$(date +'%Y%m%d-%H%M%S')"
+        git tag "$TAG"
+        git push origin "$TAG"
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+    - name: GH Release
+      uses: softprops/action-gh-release@v2.3.2
+      with:
+        tag_name: ${{ steps.tag_step.outputs.tag }}
+        name: Release ${{ steps.tag_step.outputs.tag }}
+        body: |
+          This is an automated multi-arch release.
+          Commit: ${{ github.sha }}
+        files: |
+          dist/*
