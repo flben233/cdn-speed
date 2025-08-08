@@ -34,13 +34,9 @@ func (r *nullReader) Read(p []byte) (n int, err error) {
 }
 
 func uploadWorker(serverIp string, serverPort int32, size int32, ch chan SpeedResult) {
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", serverIp, serverPort))
+	timeout := 30 * time.Second
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", serverIp, serverPort), timeout)
 	defer conn.Close()
-	if err != nil {
-		ch <- SpeedResult{0, err}
-		return
-	}
-	err = conn.SetWriteDeadline(time.Now().Add(120 * time.Second))
 	if err != nil {
 		ch <- SpeedResult{0, err}
 		return
@@ -54,6 +50,7 @@ func uploadWorker(serverIp string, serverPort int32, size int32, ch chan SpeedRe
 			"\r\n",
 		"/", serverIp, size)
 	start := time.Now()
+	ForceExitIfTimeout(conn, timeout)
 	if nn, err := io.Copy(conn, &nullReader{total: int64(size), head: []byte(req)}); err != nil {
 		if err.(net.Error).Timeout() {
 			ch <- SpeedResult{
@@ -66,8 +63,8 @@ func uploadWorker(serverIp string, serverPort int32, size int32, ch chan SpeedRe
 		}
 		return
 	}
-	lapse := float32(time.Since(start).Seconds())
-	speed := float32(size) / lapse
+	elapse := float32(time.Since(start).Seconds())
+	speed := float32(size) / elapse
 	ch <- SpeedResult{speed, nil}
 }
 

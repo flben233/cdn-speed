@@ -11,9 +11,10 @@ import (
 )
 
 func downloadWorker(url string, serverIp string, size int32, ch chan SpeedResult) {
+	timeout := 30 * time.Second
 	// 自定义 DialContext
 	dialer := &net.Dialer{
-		Timeout:   120 * time.Second,
+		Timeout:   timeout,
 		KeepAlive: 120 * time.Second,
 	}
 	transport := &http.Transport{
@@ -25,7 +26,7 @@ func downloadWorker(url string, serverIp string, size int32, ch chan SpeedResult
 	}
 	client := &http.Client{
 		Transport: transport,
-		Timeout:   120 * time.Second,
+		Timeout:   timeout,
 	}
 	handleErr := func(err error) {
 		log.Printf("Request failed: %v\n", err)
@@ -45,7 +46,10 @@ func downloadWorker(url string, serverIp string, size int32, ch chan SpeedResult
 	}
 
 	// 发起请求
-	resp, err := client.Get(url)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req, err = http.NewRequestWithContext(ctx, "GET", url, nil)
+	resp, err := client.Do(req)
 	if err != nil {
 		handleErr(err)
 		return

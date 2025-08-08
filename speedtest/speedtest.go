@@ -38,13 +38,18 @@ Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms`)
 	}
 	for _, server := range testServer.Servers {
 		ctx, cancel := context.WithCancel(context.Background())
-		testing(ctx)
+		ch := make(chan string, 1)
+		testing(ctx, ch)
 		var down, up float32
 		if multiThread {
+			ch <- fmt.Sprintf("%s %s", server.Name, "Download")
 			down = DownloadMultiThread(testServer.URL, server.IP)
+			ch <- fmt.Sprintf("%s %s", server.Name, "  Upload")
 			up = UploadMultiThread(server.IP, port)
 		} else {
+			ch <- fmt.Sprintf("%s %s", server.Name, "Download")
 			down = DownloadSingleThread(testServer.URL, server.IP)
+			ch <- fmt.Sprintf("%s %s", server.Name, "  Upload")
 			up = UploadSingleThread(server.IP, port)
 		}
 		ping := Ping(server.IP)
