@@ -39,12 +39,12 @@ jobs:
         for platform in "${PLATFORMS[@]}"; do
           GOOS=${platform%/*}
           GOARCH=${platform#*/}
-          output="dist/tyu-diskmark-${GOOS}-${GOARCH}"
+          output="dist/cdn-speed-${GOOS}-${GOARCH}"
           if [ "$GOOS" = "windows" ]; then
             output="${output}.exe"
           fi
           echo "Building for $GOOS/$GOARCH..."
-          GOOS=$GOOS GOARCH=$GOARCH go build -o "$output" ./...
+          GOOS=$GOOS GOARCH=$GOARCH go build -o "$output"
         done
         ls -lh dist
 
