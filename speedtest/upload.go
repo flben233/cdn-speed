@@ -69,16 +69,27 @@ func UploadMultiThread(serverIp string, serverPort int32) float32 {
 		go uploadWorker(serverIp, serverPort, 8*1024*1024, jobs[i])
 	}
 	var result float32
+	handleData := func(spd SpeedResult, i int) {
+		result += spd.Result
+		if spd.Err != nil {
+			log.Printf("Error occured while mt uploading to %s:%d #%d: %v\n", serverIp, serverPort, i, spd.Err)
+		}
+	}
+	timer := time.After(60 * time.Second)
 	for i, job := range jobs {
+		// 优先执行
 		select {
 		case spd := <-job:
-			result += spd.Result
-			if spd.Err != nil {
-				log.Printf("Error occured while mt uploading to %s:%d #%d: %v\n", serverIp, serverPort, i, spd.Err)
-			}
-		case <-time.After(60 * time.Second):
+			handleData(spd, i)
+			continue
+		default:
+		}
+		select {
+		case spd := <-job:
+			handleData(spd, i)
+		case <-timer:
 			result += 0
-			fmt.Println("Timeout")
+			log.Printf("Timeout while mt uploading to %s:%d #%d\n", serverIp, serverPort, i)
 		}
 	}
 	return result
@@ -94,6 +105,7 @@ func UploadSingleThread(serverIp string, serverPort int32) float32 {
 		}
 		return spd.Result
 	case <-time.After(60 * time.Second):
+		log.Printf("Timeout while uploading to %s:%d\n", serverIp, serverPort)
 		return 0.0
 	}
 }
