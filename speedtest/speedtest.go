@@ -39,7 +39,7 @@ Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms`)
 	for _, server := range testServer.Servers {
 		ctx, cancel := context.WithCancel(context.Background())
 		ch := make(chan string, 1)
-		testing(ctx, ch)
+		Testing(ctx, ch)
 		var down, up float32
 		if multiThread {
 			ch <- fmt.Sprintf("%s %s", server.Name, "Download")
@@ -58,7 +58,7 @@ Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms`)
 		down, up = down*8/(1024*1024), up*8/(1024*1024)
 		downStr, upStr := fmt.Sprintf("%.2f Mbps", down), fmt.Sprintf("%.2f Mbps", up)
 		lat, jit := fmt.Sprintf("%.2f ms", ping.AvgRtt), fmt.Sprintf("%.2f ms", ping.Jitter)
-		fmt.Printf("\r%s%-13s%s %s%-18s %-16s %-15s %-15s%s\n", Yellow, server.Name, Reset, Blue, downStr, upStr, lat, jit, Reset)
+		fmt.Printf("\r%s%s%s %s%-18s %-16s %-15s %-9s%s\n", Yellow, AutoPad(server.Name, 15), Reset, Blue, downStr, upStr, lat, jit, Reset)
 	}
 	fmt.Println("-----------------------------------------------------------------------------")
 	fmt.Println("系统时间：", time.Now().Format("2006-01-02 15:04:05 MST"))
