@@ -61,7 +61,7 @@ Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms`)
 		fmt.Printf("\r%s%s%s %s%-18s %-16s %-15s %-9s%s\n", Yellow, AutoPad(server.Name, 15), Reset, Blue, downStr, upStr, lat, jit, Reset)
 	}
 	fmt.Println("-----------------------------------------------------------------------------")
-	fmt.Println("系统时间：", time.Now().Format("2006-01-02 15:04:05 MST"))
-	fmt.Println("北京时间：", time.Now().In(time.FixedZone("CST", 8*3600)).Format("2006-01-02 15:04:05"), "CST")
+	fmt.Println("系统时间: " + time.Now().Format("2006-01-02 15:04:05 MST"))
+	fmt.Println("北京时间: " + time.Now().In(time.FixedZone("CST", 8*3600)).Format("2006-01-02 15:04:05") + " CST")
 	fmt.Println("-----------------------------------------------------------------------------")
 }
