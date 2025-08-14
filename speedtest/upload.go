@@ -1,6 +1,7 @@
 package speedtest
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -33,12 +34,11 @@ func (r *nullReader) Read(p []byte) (n int, err error) {
 	return n, nil
 }
 
-func uploadWorker(serverIp string, serverPort int32, size int32, ch chan SpeedResult) {
+func uploadWorker(done context.Context, quit context.CancelFunc, serverIp string, serverPort int32, size int32, ch chan SpeedResult) {
 	timeout := 30 * time.Second
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", serverIp, serverPort), timeout)
-	defer conn.Close()
 	if err != nil {
-		ch <- SpeedResult{0, err}
+		ch <- SpeedResult{0, 0, err}
 		return
 	}
 	_ = conn.SetDeadline(time.Now().Add(timeout))
@@ -50,54 +50,59 @@ func uploadWorker(serverIp string, serverPort int32, size int32, ch chan SpeedRe
 			"Connection: close\r\n"+
 			"\r\n",
 		"/", serverIp, size)
-	start := time.Now()
-	if nn, err := io.Copy(conn, &nullReader{total: int64(size), head: []byte(req)}); err != nil {
-		ch <- SpeedResult{
-			float32(nn) / float32(time.Since(start).Seconds()),
-			err}
-		return
-	}
-	elapse := float32(time.Since(start).Seconds())
-	speed := float32(size) / elapse
-	ch <- SpeedResult{speed, nil}
+	go func() {
+		start := time.Now()
+		nn, err := io.Copy(conn, &nullReader{total: int64(size), head: []byte(req)})
+		if err != nil {
+			ch <- SpeedResult{float32(nn) / float32(time.Since(start).Seconds()), nn, err}
+			return
+		}
+		elapse := float32(time.Since(start).Seconds())
+		speed := float32(size) / elapse
+		quit()
+		ch <- SpeedResult{speed, nn, nil}
+	}()
+	// 一旦有线程完成，立刻停下
+	<-done.Done()
+	conn.Close()
 }
 
 func UploadMultiThread(serverIp string, serverPort int32) float32 {
 	jobs := make([]chan SpeedResult, 8)
+	var size int64
+	sharedCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	for i := 0; i < 8; i++ {
 		jobs[i] = make(chan SpeedResult, 1)
-		go uploadWorker(serverIp, serverPort, 8*1024*1024, jobs[i])
-	}
-	var result float32
-	handleData := func(spd SpeedResult, i int) {
-		result += spd.Result
-		if spd.Err != nil {
-			log.Printf("Error occured while mt uploading to %s:%d #%d: %v\n", serverIp, serverPort, i, spd.Err)
-		}
+		go uploadWorker(sharedCtx, cancel, serverIp, serverPort, 32*1024*1024, jobs[i])
 	}
 	timer := time.After(60 * time.Second)
+	start := time.Now()
 	for i, job := range jobs {
 		// 优先执行
 		select {
 		case spd := <-job:
-			handleData(spd, i)
+			size += spd.Size
 			continue
 		default:
 		}
+
 		select {
 		case spd := <-job:
-			handleData(spd, i)
+			size += spd.Size
 		case <-timer:
-			result += 0
 			log.Printf("Timeout while mt uploading to %s:%d #%d\n", serverIp, serverPort, i)
 		}
 	}
-	return result
+	elapse := float32(time.Since(start).Seconds())
+	return float32(size) / elapse
 }
 
 func UploadSingleThread(serverIp string, serverPort int32) float32 {
 	job := make(chan SpeedResult, 1)
-	go uploadWorker(serverIp, serverPort, 64*1024*1024, job)
+	sharedCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go uploadWorker(sharedCtx, cancel, serverIp, serverPort, 64*1024*1024, job)
 	select {
 	case spd := <-job:
 		if spd.Err != nil {

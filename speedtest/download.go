@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func downloadWorker(url string, serverIp string, size int32, ch chan SpeedResult) {
+func downloadWorker(done context.Context, quit context.CancelFunc, url string, serverIp string, size int32, ch chan SpeedResult) {
 	timeout := 30 * time.Second
 	// 自定义 DialContext
 	dialer := &net.Dialer{
@@ -54,47 +54,49 @@ func downloadWorker(url string, serverIp string, size int32, ch chan SpeedResult
 		handleErr(err)
 		return
 	}
-	start := time.Now()
-	n, err := io.Copy(io.Discard, io.LimitReader(resp.Body, int64(size)))
-	if err != nil {
-		if err.(net.Error).Timeout() {
-			ch <- SpeedResult{
-				float32(n) / float32(time.Since(start).Seconds()),
-				nil}
-		} else {
-			ch <- SpeedResult{
-				float32(n) / float32(time.Since(start).Seconds()),
-				err}
+	go func() {
+		start := time.Now()
+		n, err := io.Copy(io.Discard, io.LimitReader(resp.Body, int64(size)))
+		if err != nil {
+			ch <- SpeedResult{float32(n) / float32(time.Since(start).Seconds()), n, err}
+			quit()
 		}
-		return
-	}
-	lapse := float32(time.Since(start).Seconds())
-	ch <- SpeedResult{
-		float32(min(int64(size), n)) / lapse,
-		err}
-	defer resp.Body.Close()
+		elapse := float32(time.Since(start).Seconds())
+		ch <- SpeedResult{float32(min(int64(size), n)) / elapse, n, err}
+		// 本线程完成，通知其他线程停下
+		quit()
+	}()
+	// 一旦有线程完成，立刻停下
+	<-done.Done()
+	resp.Body.Close()
 }
 
 func DownloadMultiThread(url string, serverIp string) float32 {
 	jobs := make([]chan SpeedResult, 8)
+	sharedCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	for i := 0; i < 8; i++ {
 		jobs[i] = make(chan SpeedResult, 1)
-		go downloadWorker(url, serverIp, 8*1024*1024, jobs[i])
+		go downloadWorker(sharedCtx, cancel, url, serverIp, 32*1024*1024, jobs[i])
 	}
-	var result float32
+	start := time.Now()
+	var size int64 = 0
 	for i, job := range jobs {
 		spd := <-job
-		result += spd.Result
+		size += spd.Size
 		if spd.Err != nil {
 			log.Printf("Error occured while mt downloading from %s #%d: %v\n", serverIp, i, spd.Err)
 		}
 	}
-	return result
+	lapse := float32(time.Since(start).Seconds())
+	return float32(size) / lapse
 }
 
 func DownloadSingleThread(url string, serverIp string) float32 {
 	job := make(chan SpeedResult, 1)
-	go downloadWorker(url, serverIp, 64*1024*1024, job)
+	sharedCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go downloadWorker(sharedCtx, cancel, url, serverIp, 64*1024*1024, job)
 	spd := <-job
 	if spd.Err != nil {
 		log.Printf("Error occured while downloading from %s: %v\n", serverIp, spd.Err)

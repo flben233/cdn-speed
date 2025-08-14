@@ -2,6 +2,7 @@ package speedtest
 
 type SpeedResult struct {
 	Result float32
+	Size   int64
 	Err    error
 }
 
