@@ -26,7 +26,7 @@ func SpeedTest(testServer TestServer, multiThread bool, banner string, ipv6 bool
 Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms
 `, ipSymbol)
 	} else {
-		fmt.Println(string(banner)+`
+		fmt.Printf(string(banner)+`
 大陆三网+教育网 %s 单线程测速，version 1
 -----------------------------------------------------------------------------
 Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms
