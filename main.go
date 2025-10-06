@@ -58,13 +58,13 @@ func main() {
 	fmt.Println()
 	switch choice {
 	case 1:
-		speedtest.SpeedTest(nodes, true, banner)
+		speedtest.SpeedTest(nodes, true, banner, false)
 	case 2:
-		speedtest.SpeedTest(nodes, false, banner)
+		speedtest.SpeedTest(nodes, false, banner, false)
 	case 3:
-		speedtest.SpeedTest(nodesV6, true, banner)
+		speedtest.SpeedTest(nodesV6, true, banner, true)
 	case 4:
-		speedtest.SpeedTest(nodesV6, false, banner)
+		speedtest.SpeedTest(nodesV6, false, banner, true)
 	case 5:
 		fmt.Println("退出程序")
 		os.Exit(0)

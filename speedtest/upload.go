@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"strconv"
 	"time"
 )
 
@@ -36,7 +37,7 @@ func (r *nullReader) Read(p []byte) (n int, err error) {
 
 func uploadWorker(done context.Context, quit context.CancelFunc, serverIp string, serverPort int32, size int32, ch chan SpeedResult) {
 	timeout := 30 * time.Second
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", serverIp, serverPort), timeout)
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(serverIp, strconv.Itoa(int(serverPort))), timeout)
 	if err != nil {
 		ch <- SpeedResult{0, 0, err}
 		return

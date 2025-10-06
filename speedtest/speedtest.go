@@ -14,17 +14,21 @@ const (
 	Reset  = "\033[0m"
 )
 
-func SpeedTest(testServer TestServer, multiThread bool, banner string) {
+func SpeedTest(testServer TestServer, multiThread bool, banner string, ipv6 bool) {
+	ipSymbol := "IPv4"
+	if ipv6 {
+		ipSymbol = "IPv6"
+	}
 	if multiThread {
-		fmt.Println(string(banner) + `
-大陆三网+教育网 IPv4 多线程测速，version 1
+		fmt.Printf(string(banner)+`
+大陆三网+教育网 %s 多线程测速，version 1
 -----------------------------------------------------------------------------
-Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms`)
+Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms`, ipSymbol)
 	} else {
-		fmt.Println(string(banner) + `
-大陆三网+教育网 IPv4 单线程测速，version 1
+		fmt.Println(string(banner)+`
+大陆三网+教育网 %s 单线程测速，version 1
 -----------------------------------------------------------------------------
-Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms`)
+Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms`, ipSymbol)
 	}
 	parts := strings.Split(testServer.URL, "://")
 	protocol := parts[0]
