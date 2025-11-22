@@ -13,7 +13,3 @@ If you want to keep the binary, use this:
 ```shell
 wget https://sh.lolicon.llc/download/flben233/cdn-speed/cdn-speed-linux-amd64 && chmod +x ./cdn-speed-linux-amd64 && ./cdn-speed-linux-amd64
 ```
-
-## TODO
-
-- IPv6 support
