@@ -14,17 +14,21 @@ const (
 	Reset  = "\033[0m"
 )
 
-func SpeedTest(testServer TestServer, multiThread bool, banner string, ipv6 bool) {
+func SpeedTest(testServer TestServer, multiThread bool, banner string, ipv6 bool, internation bool) {
 	ipSymbol := "IPv4"
 	if ipv6 {
 		ipSymbol = "IPv6"
 	}
+	netSymbol := fmt.Sprintf("大陆三网+教育网 %s 多线程测速，version 1", ipSymbol)
+	if internation {
+		netSymbol = fmt.Sprintf("各大洲 %s 八线程测速，version 1", ipSymbol)
+	}
 	if multiThread {
 		fmt.Printf(string(banner)+`
-大陆三网+教育网 %s 多线程测速，version 1
+%s
 -----------------------------------------------------------------------------
 Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms
-`, ipSymbol)
+`, netSymbol)
 	} else {
 		fmt.Printf(string(banner)+`
 大陆三网+教育网 %s 单线程测速，version 1
@@ -59,11 +63,14 @@ Node            Download/Mbps      Upload/Mbps      Latency/ms      Jitter/ms
 			up = UploadSingleThread(server.IP, port)
 		}
 		ch <- fmt.Sprintf("%s %s", server.Name, "Ping")
-		ping := Ping(server.IP)
-		cancel()
+		lat, jit := "跳过", "跳过"
+		if !internation {
+			ping := Ping(server.IP)
+			lat, jit = fmt.Sprintf("%.2f ms", ping.AvgRtt), fmt.Sprintf("%.2f ms", ping.Jitter)
+		}
 		down, up = down*8/(1024*1024), up*8/(1024*1024)
 		downStr, upStr := fmt.Sprintf("%.2f Mbps", down), fmt.Sprintf("%.2f Mbps", up)
-		lat, jit := fmt.Sprintf("%.2f ms", ping.AvgRtt), fmt.Sprintf("%.2f ms", ping.Jitter)
+		cancel()
 		fmt.Printf("\r%s%s%s %s%-18s %-16s %-15s %-9s%s\n", Yellow, AutoPad(server.Name, 15), Reset, Blue, downStr, upStr, lat, jit, Reset)
 	}
 	fmt.Println("-----------------------------------------------------------------------------")
