@@ -1,5 +1,5 @@
 ------------------------------- CDN SpeedTest -------------------------------
 Developer             : ShirakawaTyu
-Last Maintaining      : 2026-03-03
+Last Maintaining      : 2026-03-16
 GitHub                : github.com/flben233/cdn-speed
 -----------------------------------------------------------------------------
