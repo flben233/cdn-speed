@@ -1,9 +1,9 @@
 {
-  "url": "https://autopatchcn.yuanshen.com/client_app/download/Android/20260407194724_1DXQWNzQpbVonNKu/ydbackup319/yuanshen_6.5.1.apk",
+  "url": "https://autopatchcn.yuanshen.com/client_app/download/Android/20260623115935_3uIVP7RHonRpZW88/ydbackup320/yuanshen_6.7.0.apk",
   "servers": [
     {
-      "name": "电信 广东深圳",
-      "ip": "183.36.23.113"
+      "name": "电信 广东广州",
+      "ip": "113.96.129.120"
     },
     {
       "name": "电信 江苏南京",
@@ -18,8 +18,8 @@
       "ip": "116.169.164.140"
     },
     {
-      "name": "联通 北京",
-      "ip": "202.108.12.54"
+      "name": "联通 山东青岛",
+      "ip": "123.235.38.42"
     },
     {
       "name": "联通 江西南昌",
@@ -31,7 +31,7 @@
     },
     {
       "name": "移动 湖南长沙",
-      "ip": "120.226.0.132"
+      "ip": "120.226.45.140"
     },
     {
       "name": "移动 山东济南",
